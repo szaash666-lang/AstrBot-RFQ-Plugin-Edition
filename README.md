@@ -1,243 +1,275 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
-
+# AstrBot RFQ Plugin Edition
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh.md">简体中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh-TW.md">繁體中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ja.md">日本語</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ru.md">Русский</a> 
+**面向复杂产品询价、选型与商务协作的 AstrBot 本地插件版**
 
-<br>
+[![AstrBot](https://img.shields.io/badge/AstrBot-4.29.1-3776AB)](https://github.com/AstrBotDevs/AstrBot)
+[![RFQ Plugin](https://img.shields.io/badge/RFQ_Plugin-0.1.0-2F80ED)](data/plugins/astrbot_plugin_rfq_assistant)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-AGPL--3.0--or--later-663399)](LICENSE)
 
-<div>
-<a href="https://trendshift.io/repositories/21369" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21369" alt="AstrBotDevs%2FAstrBot | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-<a href="https://hellogithub.com/repository/AstrBotDevs/AstrBot" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=d127d50cd5e54c5382328acc3bb25483&claim_uid=ZO9by7qCXgSd6Lp&t=2" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </div>
 
-<br>
+> [!IMPORTANT]
+> 这是基于 [AstrBot](https://github.com/AstrBotDevs/AstrBot) 4.29.1 改造的独立 Plugin Edition，不是 AstrBot 官方发行版。本仓库保留 AstrBot 的多平台消息、模型、插件、知识库与 Agent 能力，并增加了固定三入口 Dashboard 和工业离心泵询价工作台。
 
-<div>
-<a href="https://github.com/AstrBotDevs/AstrBot/releases/latest"><img src="https://img.shields.io/github/v/release/AstrBotDevs/AstrBot?color=76bad9"></a>
-<a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="python"></a>
-<a href="https://deepwiki.com/AstrBotDevs/AstrBot"><img src="https://img.shields.io/badge/-Ask_DeepWiki-007ec6?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVRYw%2B2XP2gUQRTGv7d3JhYWQawkIBaCVWzETos0gmAnVoKNTSoLK0E7EQQrC20sBVFBtLPQRgTBtBaKjYgIQUSxiJq7fT%2BLvCGPJZdNLt4dQj5Y3u7sznzfzLw%2Fs9IO%2FicANiniCujEfWdsQgBLxAbsbraPZcmBfcAt4DNwKQsZNfEUsAB8YRV12LfA6ZHuedg7AO7ed%2Fc%2BUBcbQhbiu%2B6wXIM6EnZWkszMJe2Ke0n6I2la0v51hFeSMLN6OwIK6jJwEBdUYb2MAxRSz6sY4geiahFgLe1Hwq6YWe3us8AN4FQQU4QM64SPY69Xyr43fADgNjAPXHb3peSsD4FDQ0VLEjAHvIhBPS6AHvA1bBO9JPAXcHFbIRtJ5yzwIQZ9CZwAusDJENIkLqsG8DpNyIZJwSUk9wLHgakcesC1JCCjiHm1kYDNOEjptCxpSVK%2F8f73OFLxPLAYM3oCzEX7MXf%2FlJbc%2F8kWpA4HgQdpYI9IWAbeh83whi84cHXL%2B58EPBoQhnmm94EzwE3gZ2p%2FDhzdbhg%2BTaRr01x7ftb4%2FjBwFzjXrCvDpmLW9crVLNeR9CaapoGemb2TdCERW1tNaBNQ8jktwmozqwtpqRNtdWAjARYk39IS12ZWRX7vmJmA71nQZgi36gN7gCvAj5xc3P0jcH7kx7Ik5IC73wsh14GZsZySow5002l4Jr0b6%2Bm4eSyvpAn8lEzsx2QHo8RfUrlN%2BuPq4ksAAAAASUVORK5CYII%3D&labelColor=000000"></a>
-<a href="https://zread.ai/AstrBotDevs/AstrBot" target="_blank"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="zread"/></a>
-<a href="https://hub.docker.com/r/soulter/astrbot"><img alt="Docker pull" src="https://img.shields.io/docker/pulls/soulter/astrbot.svg?color=76bad9"/></a>
-<a href="https://cloud.astrbot.app/market"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.soulter.top%2Fastrbot%2Fplugin-num&query=%24.result&suffix=%20plugins&label=Marketplace&cacheSeconds=3600"></a>
-<a href="https://gitcode.com/Soulter/AstrBot"><img src="https://gitcode.com/Soulter/AstrBot/star/badge.svg"></a>
-</div>
+## 项目目标
 
-<br>
+客户发来询价时，往往只说明数量、流量或交期，却遗漏介质、温度、频率等关键参数。销售需要翻阅产品手册、寻找历史报价，并反复联系工程师确认。这个版本把上述过程整理为一个可追溯的协作流程：
 
-<a href="https://astrbot.app/">Documentation</a> ｜
-<a href="https://blog.astrbot.app/">Blog</a> ｜
-<a href="https://astrbot.featurebase.app/roadmap">Roadmap</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/issues">Issue Tracker</a> ｜
-<a href="mailto:community@astrbot.app">Email Support</a>
-</div>
+1. 从客户消息和附件中提取需求与原文证据。
+2. 明确指出缺失参数，不用猜测代替客户确认。
+3. 使用结构化产品目录执行确定性筛选与排序。
+4. 同时展示最多三套候选方案，供销售和工程师复核。
+5. 完成销售确认、工程审批后，导出带免责声明的 Excel。
 
-AstrBot is an open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps. It provides reliable and scalable conversational AI infrastructure for individuals, developers, and teams. Whether you're building a personal AI companion, intelligent customer service, automation assistant, or enterprise knowledge base, AstrBot enables you to quickly build production-ready AI applications within your IM platform workflows.
+模型只负责理解资料和抽取字段；产品、价格、硬约束匹配及排序由代码和产品目录决定。
 
-![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
+## 三个固定入口
 
-## Key Features
+登录后的 Dashboard 只有三个一级入口：
 
-1. 💯 Free & Open Source.
-2. ✨ AI LLM Conversations, Multimodal, Agent, MCP, Skills, Knowledge Base, Persona Settings, Auto Context Compression.
-3. 🤖 Supports integration with Dify, Alibaba Cloud Bailian, Coze, and other agent platforms.
-4. 🌐 Multi-Platform: QQ, WeChat Work, Feishu, DingTalk, WeChat Official Accounts, Telegram, Slack, and [more](#supported-messaging-platforms).
-5. 📦 Plugin Extensions with 1000+ plugins available for one-click installation.
-6. 🛡️ [Agent Sandbox](https://docs.astrbot.app/use/astrbot-agent-sandbox.html) for isolated, safe execution of code, shell calls, and session-level resource reuse.
-7. 💻 WebUI Support.
-8. 🌈 Web ChatUI Support with built-in agent sandbox and web search.
-9. 🌐 Internationalization (i18n) Support.
+| 入口 | 路由 | 用途 |
+| --- | --- | --- |
+| 机器人对话 | `/chat` | 查看机器人与飞书、钉钉、QQ 等外部消息平台之间的真实对话；不展示 Dashboard WebChat 会话 |
+| 机器人配置 | `/bot-config/:section` | 集中管理当前机器人、模型与提供商、消息平台、插件、MCP、Skills、人格、知识库、定时任务、日志和系统设置 |
+| 询价工作台 | `/workbench` | 创建询价、补齐参数、比较方案、上传附件、确认需求、技术审批、导入目录和导出 Excel |
 
-## Quick Start
+旧 WebUI 路由仍会重定向到对应的新入口。独立 `/chatbox` 兼容入口保留，但不出现在主菜单中。
 
-### One-Click Cloud Deployment (RainYun)
+新安装必须至少配置一个可用对话模型和一个消息平台，之后才会解锁机器人对话与询价工作台。
 
-For users who want one-click 24-hour-online deployment and do not want to manage servers themselves, we recommend RainYun's one-click cloud deployment service ☁️:
+## 询价工作台
 
-[![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
+### 支持的业务流程
 
-### One-Click Deployment
-
-> [!NOTE]
-> Requires [uv](https://docs.astral.sh/uv/) to be installed.
-> For macOS users: due to macOS security checks, the first run of the `astrbot` command may take longer (about 10-20s).
-
-For users who want to quickly experience AstrBot, are familiar with command-line usage, and can install a `uv` environment on their own, we recommend the `uv` one-click deployment method ⚡️:
-
-```bash
-uv tool install astrbot --python 3.12
-astrbot init # Only execute this command for the first time to initialize the environment
-astrbot run
+```mermaid
+flowchart LR
+    A[客户消息或询价附件] --> B[提取需求与证据]
+    B --> C{必填参数完整?}
+    C -- 否 --> D[待补充参数]
+    D --> B
+    C -- 是 --> E[生成最多三套候选方案]
+    E --> F[销售确认需求]
+    F --> G[工程师审批方案]
+    G -- 驳回 --> D
+    G -- 批准 --> H[导出选型与参考价格表]
 ```
 
-Update `astrbot`:
+状态依次为：
 
-```bash
-uv tool upgrade astrbot --python 3.12
+```text
+draft
+  → needs_clarification
+  → awaiting_sales_confirmation
+  → awaiting_technical_review
+  → approved_for_export
 ```
 
-### Docker Deployment
+任何需求修改都会生成新修订版，并撤销旧的销售确认和工程审批。并发编辑使用修订号检测冲突，不会静默覆盖其他人的改动。
 
-For users familiar with containers and looking for a more stable, production-ready deployment method, we recommend deploying AstrBot with Docker / Docker Compose.
+### 需求字段
 
-Please refer to the official documentation: [Deploy AstrBot with Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
+当前演示场景固定为工业离心泵，提取以下信息：
 
-### Desktop Application Deployment
+- 客户与项目、数量、预算、交期；
+- 流量、扬程、介质、温度；
+- 电压、频率、材质要求、安装环境；
+- 其他软偏好及每项参数的原文证据。
 
-For users who want to use AstrBot on desktop and mainly use ChatUI, we recommend AstrBot App.
+字段来源区分为 `explicit`、`inferred` 和 `manual`。只有客户明确提供或人工确认的必填项才算完整。
 
-Visit [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) to download and install; this method is designed for desktop usage and is not recommended for server scenarios.
+### 确定性选型
 
-### Launcher Deployment
+硬约束包括流量、扬程、介质兼容性、温度、电压和频率。通过硬约束后，再根据工作区间裕量、温度裕量、参考价格和交期排序，最多保留三个不同方案。
 
-For desktop users who also want fast deployment and isolated multi-instance usage, we recommend AstrBot Launcher.
+首次运行会写入五个明确标记为虚构演示数据的型号：
 
-Visit [AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher) to download and install.
+- `CP-32-125E`
+- `CP-40-160E`
+- `CP-40-160S`
+- `CP-50-200H`
+- `CP-65-250H`
 
-**More deployment methods**
+工作台可以下载固定列结构的产品目录模板，并原子导入 `.xlsx` 新版本。参考价格只能来自结构化产品目录，知识库、历史报价和模型输出不能覆盖价格。
 
-If you need panel-based management or deeper customization, see [BT-Panel Deployment](https://docs.astrbot.app/deploy/astrbot/btpanel.html) for BT Panel app-store setup, [1Panel Deployment](https://docs.astrbot.app/deploy/astrbot/1panel.html) for 1Panel app-market deployment, [CasaOS Deployment](https://docs.astrbot.app/deploy/astrbot/casaos.html) for NAS/home-server visual deployment, and [Manual Deployment](https://docs.astrbot.app/deploy/astrbot/cli.html) for fully custom source-based installation with `uv`.
+> [!WARNING]
+> 所有内置价格均为虚构演示参考价。系统不计算小计、总计、税费、折扣或运费，也不会自动向客户发送报价。所有导出文件均标注：**演示参考价，需商务核价，不得直接作为正式报价。**
 
+### 附件与 Agent 工具
 
-## ❤️ Sponsors
+支持读取 PDF、DOCX、XLSX、XLS、Markdown 和 TXT。单个文件最大 10 MB，每条消息最多处理 3 个附件。附件内容始终作为不可信资料处理，其中的提示词或指令不会改变产品目录、价格或匹配规则。
 
-Welcome to sponsor us via [Afdian](https://afdian.com/a/astrbot_team) or [contact us](mailto:community@astrbot.app).
+插件注册三个 Agent 工具：
 
-<p align="center">
-  <a target="_blank" href="https://astrbot.app/#/sponsors">
-    <img alt="sponsors" src="https://sponsors.astrbot.app/?v=1">
-  </a>
-</p>
+| 工具 | 作用 |
+| --- | --- |
+| `rfq_create_case(request_text)` | 从当前消息及附件创建询价 |
+| `rfq_update_case(case_id, clarification_text)` | 补充参数并生成新修订版 |
+| `rfq_get_case(case_id)` | 查询缺失参数、候选方案和审批状态 |
 
+聊天可以创建、补充和查询询价，但不能执行销售确认、工程审批或 Excel 导出；这些操作只能在工作台完成。
 
-## Supported Messaging Platforms
+## 快速启动
 
-Connect AstrBot to your favorite chat platform.
+### 环境要求
 
-| Platform | Maintainer |
-|---------|---------------|
-| QQ | Official |
-| OneBot v11 protocol implementation | Official |
-| Telegram | Official |
-| Wecom & Wecom AI Bot | Official |
-| WeChat Official Accounts | Official |
-| Feishu (Lark) | Official |
-| DingTalk | Official |
-| Slack | Official |
-| Discord | Official |
-| LINE | Official |
-| Satori | Official |
-| KOOK | Official |
-| Misskey | Official |
-| Mattermost | Official |
-| WhatsApp (Coming Soon) | Official |
-| [Matrix](https://github.com/stevessr/astrbot_plugin_matrix_adapter) | Community |
-| [Rocket.Chat](https://github.com/NET-Homeless/astrbot_plugin_rocket_chat_adapter) | Community |
-| [VoceChat](https://github.com/HikariFroya/astrbot_plugin_vocechat) | Community |
+- macOS、Linux 或 Windows；双击脚本为 macOS 专用；
+- Python 3.12 或更高版本；
+- [uv](https://docs.astral.sh/uv/)；
+- Node.js 与 [pnpm](https://pnpm.io/)；
+- Git。
 
-## Supported Model Services
-
-| Service | Type |
-|---------|---------------|
-| OpenAI and Compatible Services | LLM Services |
-| Anthropic | LLM Services |
-| Google Gemini | LLM Services |
-| Moonshot AI | LLM Services |
-| Zhipu AI | LLM Services |
-| DeepSeek | LLM Services |
-| Ollama (Self-hosted) | LLM Services |
-| LM Studio (Self-hosted) | LLM Services |
-| [MiraRouter](https://mirarouter.com/) | LLM Services (API Gateway, supports all models) |
-| [AIHubMix](https://aihubmix.com/?aff=4bfH) | LLM Services (API Gateway, supports all models) |
-| [CompShare](https://www.compshare.cn/?ytag=GPU_YY-gh_astrbot&referral_code=FV7DcGowN4hB5UuXKgpE74) | LLM Services |
-| [302.AI](https://share.302.ai/rr1M3l) | LLM Services |
-| [TokenPony](https://www.tokenpony.cn/3YPyf) | LLM Services |
-| [SiliconFlow](https://docs.siliconflow.cn/cn/usercases/use-siliconcloud-in-astrbot) | LLM Services |
-| [PPIO Cloud](https://ppio.com/user/register?invited_by=AIOONE) | LLM Services |
-| ModelScope | LLM Services |
-| OneAPI | LLM Services |
-| Dify | LLMOps Platforms |
-| Alibaba Cloud Bailian Applications | LLMOps Platforms |
-| Coze | LLMOps Platforms |
-| OpenAI Whisper | Speech-to-Text Services |
-| SenseVoice | Speech-to-Text Services |
-| Xiaomi MiMo Omni | Speech-to-Text Services |
-| OpenAI TTS | Text-to-Speech Services |
-| Gemini TTS | Text-to-Speech Services |
-| GPT-Sovits-Inference | Text-to-Speech Services |
-| GPT-Sovits | Text-to-Speech Services |
-| FishAudio | Text-to-Speech Services |
-| Edge TTS | Text-to-Speech Services |
-| Alibaba Cloud Bailian TTS | Text-to-Speech Services |
-| Azure TTS | Text-to-Speech Services |
-| Minimax TTS | Text-to-Speech Services |
-| Xiaomi MiMo TTS | Text-to-Speech Services |
-| Volcano Engine TTS | Text-to-Speech Services |
-
-## ❤️ Contributing
-
-Issues and Pull Requests are always welcome! Feel free to submit your changes to this project :)
-
-### How to Contribute
-
-You can contribute by reviewing issues or helping with pull request reviews. Any issues or PRs are welcome to encourage community participation. Of course, these are just suggestions—you can contribute in any way you like. For adding new features, please discuss through an Issue first.
-
-### Development Environment
-
-AstrBot uses `ruff` for code formatting and linting.
+### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-pip install pre-commit
-pre-commit install
+git clone https://github.com/szaash666-lang/AstrBot-RFQ-Plugin-Edition.git
+cd AstrBot-RFQ-Plugin-Edition
 ```
 
+### 2. macOS 一键启动
 
-## 🌍 Community
+在 Finder 中双击：
 
-### QQ Groups
+```text
+启动AstrBot.command
+```
 
-We have 15+ chat groups, please see: [Community](https://docs.astrbot.app/community.html) for details.
+也可以在终端执行：
 
-### Discord Server
+```bash
+open 启动AstrBot.command
+```
 
-<a href="https://discord.gg/hAVk6tgV36"><img alt="Discord_community" src="https://img.shields.io/badge/Discord-AstrBot-purple?style=for-the-badge&color=76bad9"></a>
+首次启动时，脚本会在需要时执行 `uv sync`、安装 Dashboard 依赖、构建本地 Dashboard，然后在后台启动 AstrBot 并打开：
 
-## ❤️ Special Thanks
+```text
+http://localhost:6185/#/chat
+```
 
-Special thanks to all Contributors and plugin developers for their contributions to AstrBot ❤️
+停止服务时双击 `关闭AstrBot.command`，或执行：
 
-<a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />
-</a>
+```bash
+open 关闭AstrBot.command
+```
 
-Open Source Friends ❤️
+### 3. 命令行启动
 
-- [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) - The amazing cat framework
-- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - The powerful "digital life" in your QQ! 
+```bash
+./scripts/astrbot.sh start
+```
 
-## ⭐ Star History
+常用命令：
 
-> [!TIP]
-> If this project has helped you in your life or work, or if you're interested in its future development, please give the project a Star. It's the driving force behind maintaining this open-source project <3
+```bash
+./scripts/astrbot.sh status   # 查看状态
+./scripts/astrbot.sh logs     # 查看实时日志
+./scripts/astrbot.sh restart  # 重启
+./scripts/astrbot.sh stop     # 停止
+```
 
-<div align="center">
+如果依赖尚未安装，也可以手动准备环境：
 
-[![Star History Chart](https://api.star-history.com/svg?repos=astrbotdevs/astrbot&type=Date)](https://star-history.com/#astrbotdevs/astrbot&Date)
+```bash
+uv sync
+cd dashboard
+pnpm install --frozen-lockfile
+pnpm build
+cd ..
+./scripts/astrbot.sh start
+```
 
-</div>
+### 4. 首次登录
 
-<div align="center">
+首次启动会生成随机初始密码。用户名通常为 `astrbot`，请在启动日志中查找初始密码：
 
-_Companionship and capability should never be at odds. What we aim to create is a robot that can understand emotions, provide genuine companionship, and reliably accomplish tasks._
+```bash
+./scripts/astrbot.sh logs
+```
 
-_私は、高性能ですから!_
+首次登录后请立即修改用户名和密码。不要把密码、日志或 `data/` 下的运行配置提交到公开仓库。
 
-<img src="https://files.astrbot.app/watashiwa-koseino-desukara.gif" width="100"/>
-</div>
+### 5. 完成机器人配置
+
+进入“机器人配置”，依次完成：
+
+1. 在“模型与提供商”中添加至少一个对话模型，并将其绑定到当前机器人档案。
+2. 在“消息平台”中添加并启用至少一个平台。
+3. 在“插件与扩展”中确认“询价选型助手”已启用。
+4. 按需配置 RFQ 分析模型和产品资料知识库。
+
+RFQ 插件只有两个配置项：
+
+| 配置项 | 说明 |
+| --- | --- |
+| `analysis_provider_id` | 用于结构化提取需求的模型；聊天场景未填写时尝试使用当前会话模型 |
+| `knowledge_base_names` | 可选的产品手册与历史案例知识库；只提供证据，不参与定价 |
+
+## 数据与安全
+
+运行数据保存在本地 `data/` 目录，并由 Git 忽略。主要包括账号配置、密码哈希、SQLite 数据库、附件、日志、知识库、Excel 导出和缓存。
+
+RFQ 插件自己的运行数据位于：
+
+```text
+data/plugin_data/astrbot_plugin_rfq_assistant/
+```
+
+请勿把该目录公开。插件数据库会记录询价修订、目录版本、推荐运行、审批与审计事件，以保证结果可追溯。
+
+启动脚本默认设置 `ASTRBOT_UPDATES_DISABLED=1`，暂停核心与 Dashboard 的版本更新，防止官方更新覆盖本地 Plugin Edition 改动。需要同步上游时，应先在独立分支中审查和合并代码。
+
+## 目录说明
+
+```text
+AstrBot-RFQ-Plugin-Edition/
+├── astrbot/                         # AstrBot 后端及更新暂停逻辑
+├── dashboard/                       # 三入口 Vue Dashboard
+│   └── src/views/rfq/               # 原生询价工作台页面
+├── data/plugins/
+│   └── astrbot_plugin_rfq_assistant/ # RFQ 插件、规则、存储、Excel 与兼容工作台
+├── docs/                            # 中英文 WebUI 使用说明
+├── scripts/astrbot.sh               # 后台启动、停止、状态和日志脚本
+├── 启动AstrBot.command               # macOS 一键启动
+└── 关闭AstrBot.command               # macOS 一键停止
+```
+
+## 开发与检查
+
+Python：
+
+```bash
+uv run ruff format .
+uv run ruff check .
+uv run ruff check --no-respect-gitignore data/plugins/astrbot_plugin_rfq_assistant
+uv run pytest -q data/plugins/astrbot_plugin_rfq_assistant/tests
+```
+
+Dashboard：
+
+```bash
+cd dashboard
+node --test tests/*.test.mjs
+pnpm typecheck
+pnpm i18n:check
+pnpm build
+```
+
+## 当前边界
+
+- 只提供离心泵演示，不是跨品类 CPQ 平台。
+- 不连接 ERP、CRM 或正式价格系统。
+- 不实现税费、折扣、运费、正式总价和自动发件。
+- 演示版审批不做复杂角色权限控制，但会记录操作者。
+- 知识库不可用时，仍可依据结构化产品目录完成缺参和选型。
+
+## 上游与许可证
+
+本项目基于 [AstrBotDevs/AstrBot](https://github.com/AstrBotDevs/AstrBot) 开发。AstrBot 的完整功能、平台支持和官方文档请访问：
+
+- [AstrBot 官方网站](https://astrbot.app/)
+- [AstrBot 官方文档](https://docs.astrbot.app/)
+- [AstrBot 上游仓库](https://github.com/AstrBotDevs/AstrBot)
+
+本仓库沿用 [GNU AGPL v3 or later](LICENSE) 许可证。发布或部署修改版本时，请遵守许可证中的源代码公开义务。
