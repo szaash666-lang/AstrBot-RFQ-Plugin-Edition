@@ -4,6 +4,7 @@ import AuthRoutes from './AuthRoutes';
 import ChatBoxRoutes from './ChatBoxRoutes';
 import { useAuthStore } from '@/stores/auth';
 import { useRouterLoadingStore } from '@/stores/routerLoading';
+import { useOnboardingStore } from '@/stores/onboarding';
 
 export const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -37,15 +38,24 @@ router.beforeEach(async (to, from, next) => {
   const authRequired = !publicPages.includes(to.path);
   const auth: AuthStore = useAuthStore();
 
-  // 如果用户已登录且试图访问登录页面，则重定向到首页
+  // Redirect authenticated users to the primary product entry.
   if (to.path === '/auth/login' && auth.has_token()) {
-    return next('/welcome');
+    return next('/chat');
   }
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (authRequired && !auth.has_token()) {
       auth.returnUrl = to.fullPath;
       return next('/auth/login');
+    }
+    if (to.matched.some((record) => record.meta.requiresOnboarding)) {
+      const onboarding = useOnboardingStore();
+      if (!(await onboarding.check())) {
+        return next({
+          path: '/bot-config/overview',
+          query: { onboarding: 'required', next: to.fullPath },
+        });
+      }
     }
     return next();
   } else {

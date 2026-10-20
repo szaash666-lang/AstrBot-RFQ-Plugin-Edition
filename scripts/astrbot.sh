@@ -2,11 +2,19 @@
 
 set -euo pipefail
 
+PATH="$HOME/.local/bin:$HOME/Library/pnpm:$HOME/.local/share/pnpm:/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH
+
+ASTRBOT_UPDATES_DISABLED="${ASTRBOT_UPDATES_DISABLED:-1}"
+export ASTRBOT_UPDATES_DISABLED
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 RUNTIME_DIR="$PROJECT_DIR/data/temp"
 PID_FILE="$RUNTIME_DIR/astrbot.pid"
 LOG_FILE="$RUNTIME_DIR/astrbot.log"
+DASHBOARD_SOURCE_DIR="$PROJECT_DIR/dashboard"
+DASHBOARD_TARGET_DIR="$PROJECT_DIR/data/dist"
 DASHBOARD_URL="${ASTRBOT_DASHBOARD_URL:-http://localhost:6185}"
 
 usage() {
@@ -14,11 +22,124 @@ usage() {
         "Usage: $0 [start|stop|restart|status|logs]" \
         "" \
         "Commands:" \
-        "  start    Start AstrBot in the background (default)." \
+        "  start    Build the local Dashboard when needed, then start AstrBot (default)." \
         "  stop     Stop the AstrBot process started by this script." \
         "  restart  Restart AstrBot." \
         "  status   Show the managed process status." \
         "  logs     Follow the AstrBot log."
+}
+
+prepare_dashboard() {
+    local source_candidates=(
+        "$DASHBOARD_SOURCE_DIR/src"
+        "$DASHBOARD_SOURCE_DIR/public"
+        "$DASHBOARD_SOURCE_DIR/scripts"
+        "$DASHBOARD_SOURCE_DIR/index.html"
+        "$DASHBOARD_SOURCE_DIR/package.json"
+        "$DASHBOARD_SOURCE_DIR/pnpm-lock.yaml"
+        "$DASHBOARD_SOURCE_DIR/tsconfig.json"
+        "$DASHBOARD_SOURCE_DIR/vite.config.ts"
+    )
+    local existing_sources=()
+    local source_path
+    for source_path in "${source_candidates[@]}"; do
+        if [[ -e "$source_path" ]]; then
+            existing_sources+=("$source_path")
+        fi
+    done
+
+    local build_index="$DASHBOARD_SOURCE_DIR/dist/index.html"
+    local target_index="$DASHBOARD_TARGET_DIR/index.html"
+    local newer_source=""
+    if [[ -f "$build_index" && "${#existing_sources[@]}" -gt 0 ]]; then
+        newer_source="$(find "${existing_sources[@]}" -type f -newer "$build_index" -print -quit)"
+    fi
+
+    local dashboard_built=0
+    if [[ ! -f "$build_index" || -n "$newer_source" ]]; then
+        local install_command=()
+        local build_command=()
+        if command -v pnpm >/dev/null 2>&1; then
+            install_command=(pnpm)
+            build_command=(pnpm build)
+        elif command -v node >/dev/null 2>&1 && command -v corepack >/dev/null 2>&1; then
+            install_command=(corepack pnpm)
+            build_command=(corepack pnpm build)
+        elif [[ -d "$DASHBOARD_SOURCE_DIR/node_modules" ]] \
+            && command -v npm >/dev/null 2>&1; then
+            build_command=(npm run build)
+        else
+            printf 'Cannot build the Dashboard: install Node.js and pnpm first.\n' >&2
+            return 1
+        fi
+
+        if [[ ! -d "$DASHBOARD_SOURCE_DIR/node_modules" ]]; then
+            if [[ "${#install_command[@]}" -eq 0 ]]; then
+                printf 'Dashboard dependencies are missing. Install pnpm and try again.\n' >&2
+                return 1
+            fi
+            printf 'Dashboard dependencies are missing; running pnpm install...\n'
+            (cd "$DASHBOARD_SOURCE_DIR" && "${install_command[@]}" install --frozen-lockfile)
+        fi
+
+        printf 'Dashboard source changed; building the local Plugin Edition...\n'
+        (cd "$DASHBOARD_SOURCE_DIR" && "${build_command[@]}")
+        dashboard_built=1
+    fi
+
+    if [[ ! -f "$build_index" ]]; then
+        printf 'Dashboard build did not produce %s.\n' "$build_index" >&2
+        return 1
+    fi
+
+    local dashboard_version
+    dashboard_version="$(
+        sed -n 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*$/\1/p' \
+            "$PROJECT_DIR/pyproject.toml" | sed -n '1p'
+    )"
+    if [[ -z "$dashboard_version" ]]; then
+        printf 'Cannot determine the Dashboard version from pyproject.toml.\n' >&2
+        return 1
+    fi
+
+    local build_version_file="$DASHBOARD_SOURCE_DIR/dist/assets/version"
+    local target_version_file="$DASHBOARD_TARGET_DIR/assets/version"
+    mkdir -p "$(dirname "$build_version_file")"
+    printf '%s\n' "$dashboard_version" > "$build_version_file"
+
+    # Vite can keep index.html byte-identical while changing lazy-loaded page
+    # chunks, so compare the complete build before skipping deployment.
+    if [[ "$dashboard_built" -eq 0 && -f "$target_index" \
+        && -f "$target_version_file" ]] \
+        && diff -qr "$DASHBOARD_SOURCE_DIR/dist" "$DASHBOARD_TARGET_DIR" \
+            >/dev/null 2>&1; then
+        return
+    fi
+
+    local dashboard_stage
+    dashboard_stage="$(mktemp -d "$RUNTIME_DIR/dashboard-dist.XXXXXX")"
+    if ! cp -R "$DASHBOARD_SOURCE_DIR/dist/." "$dashboard_stage/"; then
+        rm -rf "$dashboard_stage"
+        printf 'Failed to stage the Dashboard build.\n' >&2
+        return 1
+    fi
+
+    local dashboard_backup="$RUNTIME_DIR/dashboard-dist.previous.$$"
+    if [[ -d "$DASHBOARD_TARGET_DIR" ]]; then
+        mv "$DASHBOARD_TARGET_DIR" "$dashboard_backup"
+    fi
+    if ! mv "$dashboard_stage" "$DASHBOARD_TARGET_DIR"; then
+        if [[ -d "$dashboard_backup" ]]; then
+            mv "$dashboard_backup" "$DASHBOARD_TARGET_DIR"
+        fi
+        rm -rf "$dashboard_stage"
+        printf 'Failed to activate the Dashboard build; the previous copy was restored.\n' >&2
+        return 1
+    fi
+    if [[ -d "$dashboard_backup" ]]; then
+        rm -rf "$dashboard_backup"
+    fi
+    printf 'Dashboard Plugin Edition is ready.\n'
 }
 
 read_pid() {
@@ -60,6 +181,7 @@ is_managed_process() {
 
 start_astrbot() {
     mkdir -p "$RUNTIME_DIR"
+    prepare_dashboard
 
     local pid=""
     if pid="$(read_pid)"; then

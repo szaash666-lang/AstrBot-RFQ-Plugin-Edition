@@ -1,4 +1,5 @@
 export const CHAT_SELECTED_CONFIG_STORAGE_KEY = 'chat.selectedConfigId';
+export const BOT_PROFILE_CHANGED_EVENT = 'astrbot-active-profile-changed';
 
 export type ChatMessageType = 'FriendMessage' | 'GroupMessage';
 
@@ -43,6 +44,11 @@ export function getStoredSelectedChatConfigId(): string {
 
 export function setStoredSelectedChatConfigId(configId: string): void {
   setToLocalStorage(CHAT_SELECTED_CONFIG_STORAGE_KEY, configId);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(BOT_PROFILE_CHANGED_EVENT, { detail: { configId } }),
+    );
+  }
 }
 
 export function buildWebchatUmoDetails(sessionId: string, isGroup = false): WebchatUmoDetails {

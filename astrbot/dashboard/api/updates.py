@@ -58,6 +58,18 @@ def _service_response(result: UpdateServiceResult) -> JSONResponse:
 
 
 def _service_error(exc: UpdateServiceError) -> JSONResponse:
+    if exc.code == "updates_disabled":
+        logger.info(
+            "Blocked a Dashboard update operation because version updates are disabled."
+        )
+        return JSONResponse(
+            {
+                "status": "error",
+                "message": str(exc),
+                "data": {"code": "updates_disabled"},
+            },
+            status_code=200,
+        )
     logger.error(f"Dashboard update operation failed: {exc}", exc_info=True)
     if exc.code == "desktop_managed":
         return JSONResponse(

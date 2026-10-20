@@ -13,75 +13,12 @@
       :temporary="isMobile"
       :mobile-breakpoint="0"
       :rail="isSidebarCollapsed"
-      :width="245"
+      :width="330"
       :rail-width="56"
       location="left"
       floating
     >
       <div class="sidebar-top">
-        <div
-          class="chat-sidebar-brand"
-          :class="{ collapsed: isSidebarCollapsed }"
-          data-tauri-drag-region
-        >
-          <div
-            v-if="!isSidebarCollapsed"
-            class="chat-sidebar-brand-title Outfit"
-          >
-            <ChatUILogo class="chat-sidebar-brand-logo" />
-            <span class="chat-sidebar-brand-copy">
-              <span class="chat-sidebar-brand-name">AstrBot</span>
-              <span class="chat-sidebar-brand-mode">ChatUI</span>
-            </span>
-          </div>
-          <button
-            v-if="isSidebarCollapsed"
-            class="chat-sidebar-brand-toggle chat-sidebar-rail-btn"
-            type="button"
-            aria-label="Toggle sidebar"
-            @click.stop="toggleChatSidebar"
-          >
-            <span class="chat-sidebar-rail-icon-stack">
-              <ChatUILogo
-                class="chat-sidebar-brand-logo chat-sidebar-brand-logo--collapsed"
-              />
-              <PanelLeft :size="20" class="sidebar-panel-toggle-icon" />
-            </span>
-          </button>
-          <v-btn
-            v-else
-            class="chat-sidebar-brand-toggle"
-            icon
-            rounded="sm"
-            variant="text"
-            :ripple="false"
-            @click.stop="toggleChatSidebar"
-          >
-            <PanelLeft :size="20" class="sidebar-panel-toggle-icon" />
-          </v-btn>
-        </div>
-
-        <button
-          v-if="isSidebarCollapsed"
-          class="new-chat-btn sidebar-provider-btn icon-only chat-sidebar-rail-btn"
-          :class="{ 'sidebar-workspace-btn--active': isProviderWorkspace }"
-          type="button"
-          :title="tm('actions.providerConfig')"
-          @click="openProviderWorkspace"
-        >
-          <Box :size="18" class="sidebar-action-icon" />
-        </button>
-        <v-btn
-          v-else
-          class="new-chat-btn sidebar-provider-btn"
-          :class="{ 'sidebar-workspace-btn--active': isProviderWorkspace }"
-          variant="text"
-          @click="openProviderWorkspace"
-        >
-          <Box :size="18" class="sidebar-action-icon mr-2" />
-          <span>{{ tm("actions.providerConfig") }}</span>
-        </v-btn>
-
         <button
           v-if="isSidebarCollapsed"
           class="new-chat-btn icon-only chat-sidebar-rail-btn"
@@ -91,10 +28,39 @@
         >
           <SquarePen :size="18" class="sidebar-action-icon" />
         </button>
-        <v-btn v-else class="new-chat-btn" variant="text" @click="startNewChat">
-          <SquarePen :size="18" class="sidebar-action-icon mr-2" />
-          <span>{{ tm("actions.newChat") }}</span>
-        </v-btn>
+        <div v-else class="chat-new-row">
+          <v-btn
+            class="new-chat-btn new-chat-btn--primary"
+            color="primary"
+            variant="flat"
+            @click="startNewChat"
+          >
+            <SquarePen :size="18" class="sidebar-action-icon mr-2" />
+            <span>{{ tm("actions.newChat") }}</span>
+          </v-btn>
+          <v-btn
+            class="chat-sidebar-brand-toggle"
+            icon
+            rounded="sm"
+            variant="text"
+            :ripple="false"
+            aria-label="Toggle conversation sidebar"
+            @click.stop="toggleChatSidebar"
+          >
+            <PanelLeft :size="20" class="sidebar-panel-toggle-icon" />
+          </v-btn>
+        </div>
+        <v-text-field
+          v-if="!isSidebarCollapsed"
+          v-model="sidebarSearch"
+          class="chat-session-search"
+          density="compact"
+          variant="outlined"
+          hide-details
+          clearable
+          prepend-inner-icon="mdi-magnify"
+          placeholder="搜索会话"
+        />
       </div>
 
       <div
@@ -126,7 +92,7 @@
             <span>{{ tm("conversation.title") }}</span>
           </div>
           <div
-            v-for="session in sidebarSessions"
+            v-for="session in filteredSidebarSessions"
             :key="session.session_id"
             class="session-item"
             :class="{
@@ -537,7 +503,6 @@ import { useDisplay } from "vuetify";
 import { isAxiosError } from "axios";
 import {
   ArrowDown,
-  Box,
   PanelLeft,
   Pencil,
   Settings,
@@ -554,7 +519,6 @@ import ProjectList, { type Project } from "@/components/chat/ProjectList.vue";
 import ProjectView from "@/components/chat/ProjectView.vue";
 import ChatInput from "@/components/chat/ChatInput.vue";
 import ChatMessageList from "@/components/chat/ChatMessageList.vue";
-import ChatUILogo from "@/components/chat/ChatUILogo.vue";
 import type { RegenerateModelSelection } from "@/components/chat/RegenerateMenu.vue";
 import ChatLoadError from "@/components/chat/ChatLoadError.vue";
 import ReasoningSidebar from "@/components/chat/ReasoningSidebar.vue";
@@ -689,6 +653,7 @@ const projectSessions = ref<Session[]>([]);
 const projectSessionsById = ref<Record<string, Session[]>>({});
 const loadingProjectSessionIds = ref<string[]>([]);
 const loadingSessions = ref(false);
+const sidebarSearch = ref("");
 const draft = ref(readChatDraft(currSessionId.value));
 const tokenProviderConfigs = ref<TokenProviderConfig[]>([]);
 const tokenModelMetadata = ref<Record<string, ProviderModelMetadata>>({});
@@ -873,6 +838,13 @@ const sidebarSessions = computed(() => {
     return [current, ...sessions.value];
   }
   return sessions.value;
+});
+const filteredSidebarSessions = computed(() => {
+  const keyword = sidebarSearch.value.trim().toLocaleLowerCase();
+  if (!keyword) return sidebarSessions.value;
+  return sidebarSessions.value.filter((session) =>
+    sessionTitle(session).toLocaleLowerCase().includes(keyword),
+  );
 });
 const currentSessionTitle = computed(() =>
   currentSession.value ? sessionTitle(currentSession.value) : "",
@@ -2235,7 +2207,7 @@ async function stopCurrentSession() {
 }
 
 .sidebar-top {
-  padding: 0 16px 2px;
+  padding: 14px 14px 7px;
 }
 
 .chat-sidebar.collapsed .sidebar-top {
@@ -2244,7 +2216,43 @@ async function stopCurrentSession() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 0 2px;
+  padding: 14px 0 2px;
+}
+
+.chat-new-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-new-row .new-chat-btn {
+  flex: 1;
+}
+
+.new-chat-btn--primary {
+  min-height: 44px !important;
+  height: 44px !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #526af1, #4057df) !important;
+  color: #fff !important;
+  font-weight: 650 !important;
+}
+
+.new-chat-btn--primary:hover {
+  background: linear-gradient(135deg, #465fe9, #354bd1) !important;
+}
+
+.chat-session-search {
+  margin-top: 10px;
+}
+
+.chat-session-search :deep(.v-field) {
+  border-radius: 9px;
+  background: #fff;
+}
+
+.chat-ui.is-dark .chat-session-search :deep(.v-field) {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .chat-sidebar-brand {

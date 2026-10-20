@@ -30,7 +30,27 @@ from astrbot.core.utils.io import ensure_dir, remove_dir
 
 from .zip_updater import ReleaseInfo, _RepoZipUpdater
 
-__all__ = ["AstrBotUpdater", "UpdateProgress", "UpdateProgressCallback"]
+__all__ = [
+    "AstrBotUpdater",
+    "UpdateProgress",
+    "UpdateProgressCallback",
+    "updates_disabled",
+]
+
+
+def updates_disabled() -> bool:
+    """Return whether version update operations are disabled.
+
+    Returns:
+        True when ``ASTRBOT_UPDATES_DISABLED`` contains a supported truthy
+        value.
+    """
+    return os.environ.get("ASTRBOT_UPDATES_DISABLED", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +132,9 @@ class AstrBotUpdater(_RepoZipUpdater):
         Returns:
             The newer release, or None when the current version is up to date.
         """
+        if updates_disabled():
+            logger.info("Version update checks are disabled for this runtime.")
+            return None
         return await self._check_update(
             self._release_api,
             VERSION,
@@ -125,6 +148,9 @@ class AstrBotUpdater(_RepoZipUpdater):
             Releases in upstream order, including prereleases. Each item contains
             the update target version, publication timestamp, and release notes.
         """
+        if updates_disabled():
+            logger.info("Release discovery is disabled for this runtime.")
+            return []
         releases = await self._fetch_release_info(self._release_api)
         return [
             ReleaseInfo(
@@ -155,6 +181,10 @@ class AstrBotUpdater(_RepoZipUpdater):
         Raises:
             Exception: If either package cannot be prepared or applied.
         """
+        if updates_disabled():
+            raise RuntimeError(
+                "Version updates are disabled for this local Plugin Edition."
+            )
 
         async def emit_progress(
             stage: Literal["dashboard", "core", "verify", "apply"],
@@ -346,6 +376,24 @@ class AstrBotUpdater(_RepoZipUpdater):
             VERSION,
         ):
             return bundled_dist
+
+        if updates_disabled():
+            if _is_dist_complete(data_dist_path):
+                logger.info(
+                    "Using the existing local Dashboard because version updates "
+                    "are disabled."
+                )
+                return data_dist_path
+            if _is_dist_compatible(bundled_dist, VERSION):
+                logger.info(
+                    "Using bundled Dashboard assets because version updates are "
+                    "disabled."
+                )
+                return bundled_dist
+            raise RuntimeError(
+                "Dashboard updates are disabled and no usable local Dashboard "
+                "is available."
+            )
 
         if _should_use_bundled_dist(data_dist_path, VERSION):
             try:

@@ -15,7 +15,9 @@ from astrbot.core.desktop_runtime import (
     DESKTOP_MANAGED_RESTART_MESSAGE,
     is_desktop_managed_backend,
 )
-from astrbot.core.updater import AstrBotUpdater, UpdateProgress
+from astrbot.core.updater import AstrBotUpdater, UpdateProgress, updates_disabled
+
+UPDATES_DISABLED_MESSAGE = "此本地 Plugin Edition 已暂停版本更新。"
 
 
 async def call_get_dashboard_version(*args, **kwargs):
@@ -78,6 +80,27 @@ class UpdateService:
             dashboard_version = await self.get_dashboard_version(
                 self.dashboard_static_folder
             )
+            if updates_disabled():
+                if update_type == "dashboard":
+                    return UpdateServiceResult(
+                        data={
+                            "has_new_version": False,
+                            "current_version": dashboard_version,
+                            "updates_disabled": True,
+                        },
+                        message=UPDATES_DISABLED_MESSAGE,
+                    )
+                return UpdateServiceResult(
+                    status="success",
+                    message=UPDATES_DISABLED_MESSAGE,
+                    data={
+                        "version": f"v{VERSION}",
+                        "has_new_version": False,
+                        "dashboard_version": dashboard_version,
+                        "dashboard_has_new_version": False,
+                        "updates_disabled": True,
+                    },
+                )
             if update_type == "dashboard":
                 return UpdateServiceResult(
                     data={
@@ -105,6 +128,8 @@ class UpdateService:
             raise UpdateServiceError(exc.__str__()) from exc
 
     async def get_releases(self) -> UpdateServiceResult:
+        if updates_disabled():
+            return UpdateServiceResult(data=[], message=UPDATES_DISABLED_MESSAGE)
         try:
             releases = await self._updater.get_releases()
             return UpdateServiceResult(
@@ -122,6 +147,11 @@ class UpdateService:
             raise UpdateServiceError(exc.__str__()) from exc
 
     async def update_project(self, data: object) -> UpdateServiceResult:
+        if updates_disabled():
+            raise UpdateServiceError(
+                UPDATES_DISABLED_MESSAGE,
+                code="updates_disabled",
+            )
         if is_desktop_managed_backend():
             raise UpdateServiceError(
                 DESKTOP_MANAGED_RESTART_MESSAGE,
@@ -270,6 +300,11 @@ class UpdateService:
             logger.debug(f"Update task failed: {exc!s}")
 
     async def update_dashboard(self) -> UpdateServiceResult:
+        if updates_disabled():
+            raise UpdateServiceError(
+                UPDATES_DISABLED_MESSAGE,
+                code="updates_disabled",
+            )
         try:
             try:
                 await self._updater.ensure_dashboard()

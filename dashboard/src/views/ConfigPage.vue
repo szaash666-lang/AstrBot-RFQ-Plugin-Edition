@@ -13,7 +13,7 @@
         >
           <div class="config-toolbar-controls">
             <ConfigProfileMenu
-              v-if="!isSystemConfig"
+              v-if="!embedded && !isSystemConfig"
               :model-value="selectedConfigID || ''"
               :items="configInfoList"
               :disabled="initialConfigId !== null"
@@ -272,6 +272,7 @@ import { normalizeTextInput } from '@/utils/inputValue';
 
 export default {
   name: 'ConfigPage',
+  emits: ['profile-switch-rejected'],
   components: {
     AstrBotCoreConfigWrapper,
     ConfigProfileMenu,
@@ -284,6 +285,10 @@ export default {
     initialConfigId: {
       type: String,
       default: null
+    },
+    embedded: {
+      type: Boolean,
+      default: false
     }
   },
   setup() {
@@ -394,13 +399,35 @@ export default {
       }
       await this.syncConfigTypeFromHash(newVal);
     },
-    initialConfigId(newVal) {
-      if (!newVal) {
+    async initialConfigId(newVal) {
+      if (!newVal || this.selectedConfigID === newVal) {
         return;
       }
-      if (this.selectedConfigID !== newVal) {
-        this.getConfigInfoList(newVal);
+
+      const currentConfigId = this.selectedConfigID || this.currentConfigId || 'default';
+      if (this.hasUnsavedChanges) {
+        const confirmed = await this.$refs.unsavedChangesDialog?.open({
+          title: this.tm('unsavedChangesWarning.dialogTitle'),
+          message: this.tm('unsavedChangesWarning.leavePage'),
+          confirmHint: `${this.tm('unsavedChangesWarning.options.saveAndSwitch')}:${this.tm('unsavedChangesWarning.options.confirm')}`,
+          cancelHint: `${this.tm('unsavedChangesWarning.options.discardAndSwitch')}:${this.tm('unsavedChangesWarning.options.cancel')}`,
+          closeHint: `${this.tm('unsavedChangesWarning.options.closeCard')}:"x"`
+        });
+        if (confirmed === 'close') {
+          this.$emit('profile-switch-rejected', currentConfigId);
+          return;
+        }
+        if (confirmed) {
+          const result = await this.updateConfig();
+          if (!result?.success) {
+            this.$emit('profile-switch-rejected', currentConfigId);
+            return;
+          }
+        } else {
+          this.hasUnsavedChanges = false;
+        }
       }
+      this.getConfigInfoList(newVal);
     }
   },
   data() {
@@ -488,6 +515,27 @@ export default {
     window.removeEventListener('astrbot-locale-changed', this.handleLocaleChange);
   },
   methods: {
+    async beforeProfileChange() {
+      if (!this.hasUnsavedChanges) {
+        return true;
+      }
+      const confirmed = await this.$refs.unsavedChangesDialog?.open({
+        title: this.tm('unsavedChangesWarning.dialogTitle'),
+        message: this.tm('unsavedChangesWarning.leavePage'),
+        confirmHint: `${this.tm('unsavedChangesWarning.options.saveAndSwitch')}:${this.tm('unsavedChangesWarning.options.confirm')}`,
+        cancelHint: `${this.tm('unsavedChangesWarning.options.discardAndSwitch')}:${this.tm('unsavedChangesWarning.options.cancel')}`,
+        closeHint: `${this.tm('unsavedChangesWarning.options.closeCard')}:"x"`
+      });
+      if (confirmed === 'close') {
+        return false;
+      }
+      if (confirmed) {
+        const result = await this.updateConfig();
+        return result?.success === true;
+      }
+      this.hasUnsavedChanges = false;
+      return true;
+    },
     // 处理语言切换事件，重新加载配置以获取插件的 i18n 数据
     handleLocaleChange() {
       // 重新加载当前配置

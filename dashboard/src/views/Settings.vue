@@ -476,6 +476,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { apiKeyApi, systemConfigApi } from '@/api/v1';
 import AstrBotConfigV4 from '@/components/shared/AstrBotConfigV4.vue';
 import WaitingForRestart from '@/components/shared/WaitingForRestart.vue';
@@ -566,6 +567,23 @@ const serverClockAnchorMs = ref(null);
 const serverClockTickMs = ref(null);
 const serverClockTimer = ref(null);
 const activeSettingsSection = ref('general');
+const settingsRoute = useRoute();
+
+watch(
+    () => settingsRoute.hash,
+    (hash) => {
+        const sectionByHash = {
+            '#settings-appearance': 'appearance',
+            '#settings-network': 'network',
+            '#settings-security': 'security',
+            '#settings-maintenance': 'maintenance',
+            '#settings-openapi': 'openapi',
+            '#settings-resources': 'resources',
+        };
+        activeSettingsSection.value = sectionByHash[hash] || 'general';
+    },
+    { immediate: true },
+);
 const changelogDialog = ref(false);
 
 const apiKeyExpiryOptions = computed(() => [
@@ -1107,20 +1125,6 @@ onMounted(async () => {
     serverClockTimer.value = window.setInterval(() => {
         serverClockTickMs.value = performance.now();
     }, 1000);
-    const hash = window.location.hash;
-    if (hash.includes('settings-appearance')) {
-        activeSettingsSection.value = 'appearance';
-    } else if (hash.includes('settings-network')) {
-        activeSettingsSection.value = 'network';
-    } else if (hash.includes('settings-security')) {
-        activeSettingsSection.value = 'security';
-    } else if (hash.includes('settings-maintenance')) {
-        activeSettingsSection.value = 'maintenance';
-    } else if (hash.includes('settings-openapi')) {
-        activeSettingsSection.value = 'openapi';
-    } else if (hash.includes('settings-resources')) {
-        activeSettingsSection.value = 'resources';
-    }
 });
 
 onUnmounted(() => {

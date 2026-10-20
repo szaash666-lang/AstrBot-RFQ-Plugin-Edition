@@ -13,7 +13,6 @@ import "markstream-vue/index.css";
 import "katex/dist/katex.min.css";
 import "highlight.js/styles/github.css";
 import { useI18n, useModuleI18n } from "@/i18n/composables";
-import { router } from "@/router";
 import { useRoute } from "vue-router";
 import { useDisplay, useTheme } from "vuetify";
 import StyledMenu from "@/components/shared/StyledMenu.vue";
@@ -44,9 +43,8 @@ const { smAndDown } = useDisplay();
 const { t } = useI18n();
 const { tm } = useModuleI18n("features/chat");
 const route = useRoute();
-const LAST_BOT_ROUTE_KEY = "astrbot:last_bot_route";
-const LAST_CHAT_ROUTE_KEY = "astrbot:last_chat_route";
 const SHOW_PRE_RELEASES_KEY = "astrbot:updateDialog:showPreReleases";
+const PLUGIN_EDITION_UPDATES_PAUSED = true;
 let dialog = ref(false);
 let accountWarning = ref(false);
 let accountWarningMd5 = ref(false);
@@ -133,7 +131,9 @@ const desktopUpdateHasNewVersion = ref(false);
 const desktopUpdateCurrentVersion = ref("-");
 const desktopUpdateLatestVersion = ref("-");
 const desktopUpdateStatus = ref("");
-const desktopDownloadProgress = ref<AstrBotDesktopAppUpdateProgress | null>(null);
+const desktopDownloadProgress = ref<AstrBotDesktopAppUpdateProgress | null>(
+  null,
+);
 const appHasNewVersion = computed(() =>
   isDesktopReleaseMode.value
     ? desktopUpdateHasNewVersion.value
@@ -141,8 +141,9 @@ const appHasNewVersion = computed(() =>
 );
 const hasAvailableUpdate = computed(
   () =>
-    appHasNewVersion.value ||
-    (!isDesktopReleaseMode.value && dashboardHasNewVersion.value),
+    !PLUGIN_EDITION_UPDATES_PAUSED &&
+    (appHasNewVersion.value ||
+      (!isDesktopReleaseMode.value && dashboardHasNewVersion.value)),
 );
 const isChatPath = computed(
   () => route.path === "/chat" || route.path.startsWith("/chat/"),
@@ -155,8 +156,8 @@ const chatHeaderStyle = computed(() => {
   const sidebarWidth = smAndDown.value
     ? 0
     : customizer.chatSidebarCollapsed
-      ? 56
-      : 245;
+    ? 56
+    : 330;
   return {
     // The chat toolbar is window chrome, so it must paint the full window. The
     // sidebar width remains available to contextual content through this CSS
@@ -415,6 +416,7 @@ async function confirmDesktopUpdate() {
 }
 
 function handleUpdateClick() {
+  if (PLUGIN_EDITION_UPDATES_PAUSED) return;
   if (isDesktopReleaseMode.value) {
     void checkDesktopUpdate(true);
     return;
@@ -500,12 +502,8 @@ function getVersion() {
         dialog.value = true;
         accountWarning.value = true;
         accountWarningUpgrade.value = !!password_upgrade_required;
-        accountWarningMd5.value =
-          !!md5_pwd_hint && !password_upgrade_required;
-        if (
-          change_pwd_hint ||
-          (md5_pwd_hint && !password_upgrade_required)
-        ) {
+        accountWarningMd5.value = !!md5_pwd_hint && !password_upgrade_required;
+        if (change_pwd_hint || (md5_pwd_hint && !password_upgrade_required)) {
           localStorage.setItem("change_pwd_hint", "true");
         } else {
           localStorage.removeItem("change_pwd_hint");
@@ -535,16 +533,14 @@ function getVersion() {
 
 function initPasswordWarningFromStorage() {
   const hasChangePwdHint = localStorage.getItem("change_pwd_hint") === "true";
-  const hasMd5PwdHint =
-    localStorage.getItem("md5_pwd_hint") === "true";
+  const hasMd5PwdHint = localStorage.getItem("md5_pwd_hint") === "true";
   const hasPasswordUpgradeRequired =
     localStorage.getItem("password_upgrade_required") === "true";
   if (hasChangePwdHint || hasMd5PwdHint || hasPasswordUpgradeRequired) {
     dialog.value = true;
     accountWarning.value = true;
     accountWarningUpgrade.value = hasPasswordUpgradeRequired;
-    accountWarningMd5.value =
-      hasMd5PwdHint && !hasPasswordUpgradeRequired;
+    accountWarningMd5.value = hasMd5PwdHint && !hasPasswordUpgradeRequired;
   }
 }
 
@@ -553,7 +549,8 @@ function checkUpdate() {
   updatesApi
     .check()
     .then((res) => {
-      const backendHasNewVersion = !isDesktopReleaseMode.value && res.data.data.has_new_version;
+      const backendHasNewVersion =
+        !isDesktopReleaseMode.value && res.data.data.has_new_version;
       hasNewVersion.value = backendHasNewVersion;
 
       if (backendHasNewVersion) {
@@ -862,8 +859,7 @@ async function switchVersion(targetVersion: string) {
           ...updateProgress.value,
           status: "error",
           message:
-            res.data.message ||
-            t("core.header.updateDialog.progress.failed"),
+            res.data.message || t("core.header.updateDialog.progress.failed"),
         };
       }
     })
@@ -915,12 +911,24 @@ function updateDashboard() {
 
 // 主题选项配置
 const themeOptions = [
-  { mode: 'light' as const,  icon: 'mdi-white-balance-sunny', labelKey: 'core.header.buttons.theme.light'  },
-  { mode: 'dark'  as const,  icon: 'mdi-weather-night',       labelKey: 'core.header.buttons.theme.dark'   },
-  { mode: 'system' as const, icon: 'mdi-sync',                labelKey: 'core.header.buttons.theme.system' },
+  {
+    mode: "light" as const,
+    icon: "mdi-white-balance-sunny",
+    labelKey: "core.header.buttons.theme.light",
+  },
+  {
+    mode: "dark" as const,
+    icon: "mdi-weather-night",
+    labelKey: "core.header.buttons.theme.dark",
+  },
+  {
+    mode: "system" as const,
+    icon: "mdi-sync",
+    labelKey: "core.header.buttons.theme.system",
+  },
 ] as const;
 
-function setThemeMode(mode: 'light' | 'dark' | 'system') {
+function setThemeMode(mode: "light" | "dark" | "system") {
   customizer.SET_THEME_MODE(mode);
   theme.global.name.value = customizer.uiTheme;
 }
@@ -932,7 +940,9 @@ function openReleaseNotesDialog(body: string, tag: string) {
 }
 
 getVersion();
-checkUpdate();
+if (!PLUGIN_EDITION_UPDATES_PAUSED) {
+  checkUpdate();
+}
 initPasswordWarningFromStorage();
 
 commonStore.getStartTime();
@@ -943,109 +953,12 @@ onUnmounted(() => {
   stopRestartReloadTimer();
 });
 
-// 视图模式切换
-onMounted(() => {
-  isWindowsDesktop.value =
-    document.documentElement.dataset.astrbotDesktopPlatform === "windows";
-  // 初次加載時保存當前路由
-  if (typeof window !== "undefined") {
-    if (isChatPath.value) {
-      // 保存 chat ID
-      const parts = route.fullPath.split("/");
-      const sessionId = parts[2];
-      if (sessionId) {
-        sessionStorage.setItem(LAST_CHAT_ROUTE_KEY, sessionId);
-        console.log("Initial save chat ID:", sessionId);
-      }
-    } else {
-      // 保存 bot 路由（非 chat 頁面）
-      sessionStorage.setItem(LAST_BOT_ROUTE_KEY, route.fullPath);
-      console.log("Initial save bot route:", route.fullPath);
-    }
-  }
-});
-
-// 监听 viewMode 变化，切换到 bot 模式时跳转到首页
-// 保存 bot 模式的最後路由
-// 監聽 route 變化，保存最後一次 bot 路由
 watch(showPreReleases, (value) => {
   if (typeof window === "undefined") return;
   localStorage.setItem(SHOW_PRE_RELEASES_KEY, value ? "true" : "false");
 });
 
-watch(
-  () => route.fullPath,
-  (newPath) => {
-    if (typeof window === "undefined") return;
-    console.log("Route changed:", {
-      newPath,
-      isChat: isChatPath.value,
-      currentChatId: route.params.id,
-    });
-    try {
-      // 使用現有的 isChatPath 計算屬性來避免名稱衝突
-      const isChat = isChatPath.value; // 這裡使用已經計算好的 isChatPath
-
-      // ✅ bot：只存「非 chat 頁」
-      if (!isChat) {
-        sessionStorage.setItem(LAST_BOT_ROUTE_KEY, newPath);
-      }
-
-      // ✅ chat：只存 sessionId
-      if (isChat) {
-        const parts = newPath.split("/");
-        const sessionId = parts[2];
-
-        if (sessionId) {
-          sessionStorage.setItem(LAST_CHAT_ROUTE_KEY, sessionId);
-        }
-      }
-    } catch (e) {
-      console.error("Failed to save route:", e);
-    }
-  },
-);
-
-const currentMode = computed({
-  get: () => (isChatPath.value ? "chat" : "bot"),
-  set: (val: "chat" | "bot") => {
-    try {
-      // 檢查 window 和 sessionStorage 是否存在
-      if (
-        typeof window === "undefined" ||
-        typeof sessionStorage === "undefined"
-      ) {
-        // 如果在非瀏覽器環境中，不做任何 sessionStorage 操作
-        console.warn("sessionStorage is not available in this environment");
-        return;
-      }
-
-      if (val === "chat") {
-        const lastSessionId = sessionStorage.getItem(LAST_CHAT_ROUTE_KEY);
-        router.push(lastSessionId ? `/chat/${lastSessionId}` : "/chat");
-      } else {
-        let lastBotRoute = sessionStorage.getItem(LAST_BOT_ROUTE_KEY) || "/";
-        if (lastBotRoute.startsWith("/chat")) {
-          lastBotRoute = "/";
-        }
-        router.push(lastBotRoute);
-      }
-    } catch (e) {
-      // 在受限隱私模式等環境中，sessionStorage 操作可能會拋出 SecurityError
-      console.warn("Failed to access sessionStorage in currentMode setter:", e);
-    }
-  },
-});
-
 const mainMenuOpen = ref(false);
-const nextMode = computed<"chat" | "bot">(() =>
-  isChatPath.value ? "bot" : "chat",
-);
-
-function switchMode() {
-  currentMode.value = nextMode.value;
-  mainMenuOpen.value = false;
-}
 
 // 语言切换相关
 const { languageOptions, currentLanguage, switchLanguage, locale } =
@@ -1064,9 +977,11 @@ const changeLanguage = async (langCode: string) => {
 };
 
 onMounted(async () => {
+  isWindowsDesktop.value =
+    document.documentElement.dataset.astrbotDesktopPlatform === "windows";
   const runtimeInfo = await getDesktopRuntimeInfo();
   isDesktopReleaseMode.value = runtimeInfo.isDesktopRuntime;
-  if (isDesktopReleaseMode.value) {
+  if (!PLUGIN_EDITION_UPDATES_PAUSED && isDesktopReleaseMode.value) {
     dashboardHasNewVersion.value = false;
     void checkDesktopUpdate();
   }
@@ -1095,7 +1010,7 @@ onMounted(async () => {
   >
     <!-- Mobile: open the navigation drawer (sidebars become temporary overlays). -->
     <v-btn
-      v-if="$vuetify.display.smAndDown"
+      v-if="$vuetify.display.smAndDown && isChatPath"
       class="header-menu-btn"
       icon
       rounded="lg"
@@ -1117,7 +1032,11 @@ onMounted(async () => {
 
     <!-- Desktop keeps the update notice visible in both Bot and Chat modes. -->
     <button
-      v-if="hasAvailableUpdate && (!isChatPath || isDesktopReleaseMode)"
+      v-if="
+        !PLUGIN_EDITION_UPDATES_PAUSED &&
+        hasAvailableUpdate &&
+        (!isChatPath || isDesktopReleaseMode)
+      "
       type="button"
       class="update-notice mr-4 hidden-xs text-no-wrap"
       @click="handleUpdateClick"
@@ -1153,71 +1072,31 @@ onMounted(async () => {
         </v-icon>
       </v-btn>
 
-      <!-- Bot/Chat mode switch - single button, hidden in chat mobile menu -->
-      <v-btn
-        v-if="!isChatPath || !$vuetify.display.smAndDown"
-        class="mode-switch-btn"
-        :class="{ 'mr-4 hidden-xs': !isChatPath }"
-        variant="text"
-        size="small"
-        rounded="sm"
-        :ripple="false"
-        @click="switchMode"
-      >
-        <v-icon start>{{ nextMode === "bot" ? "mdi-robot" : "mdi-chat" }}</v-icon>
-        <span class="mode-switch-label">{{
-          nextMode === "bot" ? t("core.navigation.botMode") : t("core.navigation.chat")
-        }}</span>
-      </v-btn>
-
       <!-- 功能菜单 -->
       <StyledMenu v-model="mainMenuOpen" offset="12" location="bottom end">
         <template v-slot:activator="{ props: activatorProps }">
           <v-btn
             v-bind="activatorProps"
             size="small"
-            :class="[
-              'action-btn',
-              isChatPath ? 'chat-action-btn' : 'mr-4',
-            ]"
+            :class="['action-btn', isChatPath ? 'chat-action-btn' : 'mr-4']"
             :color="isChatPath ? undefined : 'var(--v-theme-surface)'"
             :variant="isChatPath ? 'text' : 'flat'"
             rounded="sm"
             icon
             :ripple="false"
           >
-            <v-badge :model-value="hasAvailableUpdate" color="primary" dot floating>
+            <v-badge
+              :model-value="hasAvailableUpdate"
+              color="primary"
+              dot
+              floating
+            >
               <v-icon>mdi-dots-vertical</v-icon>
             </v-badge>
-            <span class="header-toolbar-label">{{ t("core.navigation.options") }}</span>
+            <span class="header-toolbar-label">{{
+              t("core.navigation.options")
+            }}</span>
           </v-btn>
-        </template>
-
-        <!-- Bot/Chat 模式切换 - 仅在手机端显示 -->
-        <template
-          v-if="
-            (isChatPath && $vuetify.display.smAndDown) ||
-            (!isChatPath && $vuetify.display.xs)
-          "
-        >
-          <div class="mobile-mode-switch-wrapper">
-            <v-btn
-              class="mobile-mode-switch-btn"
-              variant="text"
-              block
-              @click="switchMode"
-            >
-              <v-icon start>{{
-                nextMode === "bot" ? "mdi-robot" : "mdi-chat"
-              }}</v-icon>
-              {{
-                nextMode === "bot"
-                  ? t("core.navigation.botMode")
-                  : t("core.navigation.chat")
-              }}
-            </v-btn>
-          </div>
-          <v-divider class="my-1" />
         </template>
 
         <!-- 语言切换分组 -->
@@ -1280,113 +1159,120 @@ onMounted(async () => {
           </v-card>
         </v-menu>
 
-      <!-- 主题切换分组 -->
-      <v-menu
-        open-on-click
-        :open-on-hover="!$vuetify.display.xs"
-        :open-delay="!$vuetify.display.xs ? 60 : 0"
-        :close-delay="!$vuetify.display.xs ? 120 : 0"
-        :location="$vuetify.display.xs ? 'bottom' : 'start center'"
-        offset="8"
-      >
-        <template v-slot:activator="{ props: themeMenuProps }">
-          <v-list-item
-            v-bind="themeMenuProps"
-            @click.stop
-            class="styled-menu-item theme-group-trigger"
-            rounded="md"
-          >
-            <template v-slot:prepend>
-              <v-icon>mdi-brightness-6</v-icon>
-            </template>
-            <v-list-item-title>{{
-              t("core.header.buttons.theme.title")
-            }}</v-list-item-title>
-            <template v-slot:append>
-              <span class="theme-group-current">
-                <v-icon size="16">{{
-                  customizer.themeMode === 'dark'
-                    ? 'mdi-weather-night'
-                    : customizer.themeMode === 'system'
-                      ? 'mdi-theme-light-dark'
-                      : 'mdi-white-balance-sunny'
-                }}</v-icon>
-              </span>
-              <v-icon size="18" class="language-group-arrow">mdi-chevron-right</v-icon>
-            </template>
-          </v-list-item>
-        </template>
-
-        <v-card
-          class="styled-menu-card"
-          style="min-width: 170px"
-          elevation="8"
-          rounded="lg"
+        <!-- 主题切换分组 -->
+        <v-menu
+          open-on-click
+          :open-on-hover="!$vuetify.display.xs"
+          :open-delay="!$vuetify.display.xs ? 60 : 0"
+          :close-delay="!$vuetify.display.xs ? 120 : 0"
+          :location="$vuetify.display.xs ? 'bottom' : 'start center'"
+          offset="8"
         >
-          <v-list density="compact" class="styled-menu-list pa-1">
+          <template v-slot:activator="{ props: themeMenuProps }">
             <v-list-item
-              v-for="option in themeOptions"
-              :key="option.mode"
-              @click="setThemeMode(option.mode)"
-              :class="{
-                'styled-menu-item-active': customizer.themeMode === option.mode,
-              }"
-              class="styled-menu-item"
+              v-bind="themeMenuProps"
+              @click.stop
+              class="styled-menu-item theme-group-trigger"
               rounded="md"
             >
               <template v-slot:prepend>
-                <v-icon size="18" class="theme-option-icon">{{ option.icon }}</v-icon>
+                <v-icon>mdi-brightness-6</v-icon>
               </template>
-              <v-list-item-title>{{ t(option.labelKey) }}</v-list-item-title>
+              <v-list-item-title>{{
+                t("core.header.buttons.theme.title")
+              }}</v-list-item-title>
+              <template v-slot:append>
+                <span class="theme-group-current">
+                  <v-icon size="16">{{
+                    customizer.themeMode === "dark"
+                      ? "mdi-weather-night"
+                      : customizer.themeMode === "system"
+                      ? "mdi-theme-light-dark"
+                      : "mdi-white-balance-sunny"
+                  }}</v-icon>
+                </span>
+                <v-icon size="18" class="language-group-arrow"
+                  >mdi-chevron-right</v-icon
+                >
+              </template>
             </v-list-item>
-          </v-list>
-        </v-card>
-      </v-menu>
+          </template>
 
-      <!-- 更新按钮 -->
-      <v-list-item
-        @click="handleUpdateClick"
-        class="styled-menu-item"
-        rounded="md"
-      >
-        <template v-slot:prepend>
-          <v-icon>mdi-arrow-up-circle</v-icon>
-        </template>
-        <v-list-item-title>{{
-          t("core.header.updateDialog.title")
-        }}</v-list-item-title>
-        <template
-          v-slot:append
-          v-if="hasAvailableUpdate"
-        >
-          <v-chip size="x-small" color="primary" variant="tonal" class="ml-2"
-            >!</v-chip
+          <v-card
+            class="styled-menu-card"
+            style="min-width: 170px"
+            elevation="8"
+            rounded="lg"
           >
-        </template>
-      </v-list-item>
+            <v-list density="compact" class="styled-menu-list pa-1">
+              <v-list-item
+                v-for="option in themeOptions"
+                :key="option.mode"
+                @click="setThemeMode(option.mode)"
+                :class="{
+                  'styled-menu-item-active':
+                    customizer.themeMode === option.mode,
+                }"
+                class="styled-menu-item"
+                rounded="md"
+              >
+                <template v-slot:prepend>
+                  <v-icon size="18" class="theme-option-icon">{{
+                    option.icon
+                  }}</v-icon>
+                </template>
+                <v-list-item-title>{{ t(option.labelKey) }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-menu>
 
-      <!-- 账户按钮 -->
-      <v-list-item @click="dialog = true" class="styled-menu-item" rounded="md">
-        <template v-slot:prepend>
-          <v-icon>mdi-account</v-icon>
-        </template>
-        <v-list-item-title>{{
-          t("core.header.accountDialog.title")
-        }}</v-list-item-title>
-      </v-list-item>
+        <!-- 更新按钮 -->
+        <v-list-item
+          v-if="!PLUGIN_EDITION_UPDATES_PAUSED"
+          @click="handleUpdateClick"
+          class="styled-menu-item"
+          rounded="md"
+        >
+          <template v-slot:prepend>
+            <v-icon>mdi-arrow-up-circle</v-icon>
+          </template>
+          <v-list-item-title>{{
+            t("core.header.updateDialog.title")
+          }}</v-list-item-title>
+          <template v-slot:append v-if="hasAvailableUpdate">
+            <v-chip size="x-small" color="primary" variant="tonal" class="ml-2"
+              >!</v-chip
+            >
+          </template>
+        </v-list-item>
 
-      <v-divider class="my-1" />
+        <!-- 账户按钮 -->
+        <v-list-item
+          @click="dialog = true"
+          class="styled-menu-item"
+          rounded="md"
+        >
+          <template v-slot:prepend>
+            <v-icon>mdi-account</v-icon>
+          </template>
+          <v-list-item-title>{{
+            t("core.header.accountDialog.title")
+          }}</v-list-item-title>
+        </v-list-item>
 
-      <v-list-item
-        @click="authStore.logout()"
-        class="styled-menu-item text-error"
-        prepend-icon="mdi-logout"
-        rounded="md"
-      >
-        <v-list-item-title>
-          {{ t("core.header.buttons.logout") }}
-        </v-list-item-title>
-      </v-list-item>
+        <v-divider class="my-1" />
+
+        <v-list-item
+          @click="authStore.logout()"
+          class="styled-menu-item text-error"
+          prepend-icon="mdi-logout"
+          rounded="md"
+        >
+          <v-list-item-title>
+            {{ t("core.header.buttons.logout") }}
+          </v-list-item-title>
+        </v-list-item>
       </StyledMenu>
       <!-- Custom caption buttons on Windows, where the native title bar is disabled. -->
       <div v-if="isWindowsDesktop" class="header-caption-btns">
@@ -1422,15 +1308,14 @@ onMounted(async () => {
 
     <!-- 更新对话框 -->
     <v-dialog
+      v-if="!PLUGIN_EDITION_UPDATES_PAUSED"
       v-model="updateStatusDialog"
       :width="$vuetify.display.smAndDown ? '100%' : '920'"
       :fullscreen="$vuetify.display.xs"
     >
       <v-card>
         <v-card-title class="text-h3 pa-4 pb-0 pl-6 mobile-card-title">
-          <span>{{
-            t("core.header.updateDialog.title")
-          }}</span>
+          <span>{{ t("core.header.updateDialog.title") }}</span>
           <v-btn
             v-if="$vuetify.display.xs"
             icon
@@ -1808,6 +1693,7 @@ onMounted(async () => {
     </v-dialog>
 
     <v-dialog
+      v-if="!PLUGIN_EDITION_UPDATES_PAUSED"
       v-model="desktopUpdateDialog"
       :persistent="desktopUpdateInstalling"
       max-width="460"
@@ -2567,9 +2453,10 @@ html {
   box-shadow: none !important;
 }
 
-html[data-astrbot-desktop-platform='macos'] .top-header,
-html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header,
-html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mode-header--dark {
+html[data-astrbot-desktop-platform="macos"] .top-header,
+html[data-astrbot-desktop-platform="macos"] .top-header.chat-mode-header,
+html[data-astrbot-desktop-platform="macos"]
+  .top-header.chat-mode-header.chat-mode-header--dark {
   background: var(--astrbot-vibrancy-tint, transparent) !important;
 }
 
@@ -2587,7 +2474,6 @@ html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mo
   width: 100% !important;
 }
 
-
 .top-header .v-toolbar__content {
   padding-inline-end: 24px !important;
 }
@@ -2595,7 +2481,7 @@ html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mo
 /* On macOS the traffic lights sit over the toolbar's left zone once the sidebar
    is no longer permanent, so the menu button must clear them. */
 @media (max-width: 959.98px) {
-  html[data-astrbot-desktop-platform='macos'] .top-header .v-toolbar__content {
+  html[data-astrbot-desktop-platform="macos"] .top-header .v-toolbar__content {
     padding-inline-start: 74px !important;
   }
 }
@@ -2711,5 +2597,4 @@ html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mo
   background: rgba(232, 17, 35, 0.9) !important;
   color: #fff;
 }
-
 </style>

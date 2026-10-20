@@ -44,17 +44,12 @@ export const useAuthStore = defineStore("auth", {
         localStorage.removeItem('password_upgrade_required');
       }
 
-      const onboardingCompleted = await this.checkOnboardingCompleted();
       this.returnUrl = null;
       if (passwordWarning) {
         router.push('/auth/setup');
         return;
       }
-      if (onboardingCompleted) {
-        router.push('/dashboard/default');
-      } else {
-        router.push('/welcome');
-      }
+      router.push('/chat');
     },
     async login(
       username: string,

@@ -4,7 +4,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import VerticalSidebarVue from "./vertical-sidebar/VerticalSidebar.vue";
 import VerticalHeaderVue from "./vertical-header/VerticalHeader.vue";
 import ReadmeDialog from "@/components/shared/ReadmeDialog.vue";
-import Chat from "@/components/chat/Chat.vue";
+import ChatPage from "@/views/ChatPage.vue";
 import { useCustomizerStore } from "@/stores/customizer";
 import { useRouterLoadingStore } from "@/stores/routerLoading";
 import { useCommonStore } from "@/stores/common";
@@ -24,24 +24,35 @@ const isCurrentChatRoute = computed(
   () => route.path === "/chat" || route.path.startsWith("/chat/"),
 );
 const isPluginViewRoute = computed(
-  () => route.path.startsWith("/plugin-view/") || route.path.startsWith("/plugin-page/"),
+  () =>
+    route.path.startsWith("/plugin-view/") ||
+    route.path.startsWith("/plugin-page/") ||
+    route.path.startsWith("/bot-config/extensions/view/"),
 );
-const isProviderPageRoute = computed(() => route.path === "/providers");
-const isPlatformPageRoute = computed(() => route.path === "/platforms");
+const isProviderPageRoute = computed(
+  () => route.path === "/providers" || route.path === "/bot-config/models",
+);
+const isPlatformPageRoute = computed(
+  () => route.path === "/platforms" || route.path === "/bot-config/platforms",
+);
 const isViewportLockedRoute = computed(
   () =>
     isCurrentChatRoute.value ||
+    route.path.startsWith("/bot-config") ||
+    route.path.startsWith("/workbench") ||
     isProviderPageRoute.value ||
     isPlatformPageRoute.value ||
     route.path === "/config" ||
     route.path === "/settings",
 );
 const isFullScreenRoute = computed(
-  () => isCurrentChatRoute.value || isPluginViewRoute.value,
+  () =>
+    isCurrentChatRoute.value ||
+    route.path.startsWith("/bot-config") ||
+    route.path.startsWith("/workbench") ||
+    isPluginViewRoute.value,
 );
 const shouldMountChat = ref(isCurrentChatRoute.value);
-
-const showSidebar = computed(() => !isCurrentChatRoute.value);
 
 const showFirstNoticeDialog = ref(false);
 
@@ -51,9 +62,8 @@ watch(isCurrentChatRoute, (isChatRoute) => {
   }
 });
 
-// Temporary mobile drawers must never survive a route transition. Chat stays
-// mounted with v-show, so resetting the shared store here also covers Chat/Bot
-// switches and navigation initiated from inside ChatUI.
+// Temporary mobile drawers must never survive a route transition. The platform
+// inbox stays mounted with v-show, so this also closes its conversation drawer.
 watch(
   () => route.fullPath,
   () => mobileDrawer.SET(false),
@@ -127,7 +137,7 @@ onMounted(() => {
         top
         style="z-index: 9999; position: absolute; opacity: 0.3"
       />
-      <VerticalSidebarVue v-if="showSidebar" />
+      <VerticalSidebarVue />
       <VerticalHeaderVue />
       <v-main :class="{ 'chat-main': isCurrentChatRoute }">
         <v-container
@@ -155,7 +165,7 @@ onMounted(() => {
               v-show="isCurrentChatRoute"
               style="height: 100%; width: 100%; overflow: hidden"
             >
-              <Chat :active="isCurrentChatRoute" />
+              <ChatPage :active="isCurrentChatRoute" />
             </div>
             <RouterView v-if="!isCurrentChatRoute" />
           </div>
@@ -220,8 +230,14 @@ onMounted(() => {
 /* On small screens there is no permanent sidebar to separate from, so the
    card's edge treatments would only read as stray lines. */
 @media (max-width: 959.98px) {
+  :global(.v-main) {
+    height: calc(100dvh - var(--astrbot-toolbar-height, 40px) - 64px - env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+  }
+
   :global(.page-wrapper) {
     --astrbot-content-gap: 0px;
+    height: 100% !important;
     border-left: 0;
     border-right: 0;
     border-bottom: 0;

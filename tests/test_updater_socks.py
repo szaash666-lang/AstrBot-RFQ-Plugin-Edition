@@ -816,6 +816,62 @@ async def test_astrbot_updater_does_not_apply_unverified_packages(
 
 
 @pytest.mark.asyncio
+async def test_astrbot_updater_pauses_remote_version_operations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    updater = AstrBotUpdater()
+    remote_calls: list[str] = []
+
+    async def fail_remote(*_args, **_kwargs):
+        remote_calls.append("remote")
+        raise AssertionError("Paused updates must not reach the network")
+
+    monkeypatch.setenv("ASTRBOT_UPDATES_DISABLED", "1")
+    monkeypatch.setattr(updater, "_check_update", fail_remote)
+    monkeypatch.setattr(updater, "_fetch_release_info", fail_remote)
+
+    assert await updater.check_update() is None
+    assert await updater.get_releases() == []
+    with pytest.raises(RuntimeError, match="updates are disabled"):
+        await updater.update(version="v99.0.0")
+    assert remote_calls == []
+
+
+@pytest.mark.asyncio
+async def test_astrbot_updater_keeps_complete_local_dashboard_when_paused(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    updater = AstrBotUpdater()
+    data_path = tmp_path / "data"
+    data_dist = data_path / "dist"
+    (data_dist / "assets").mkdir(parents=True)
+    (data_dist / "index.html").write_text(
+        '<script type="module" src="/assets/local.js"></script>',
+        encoding="utf-8",
+    )
+    (data_dist / "assets" / "local.js").write_text("local", encoding="utf-8")
+    (data_dist / "assets" / "version").write_text("v0.0.1", encoding="utf-8")
+    download_calls: list[str] = []
+
+    async def fail_download(**_kwargs) -> None:
+        download_calls.append("download")
+        raise AssertionError("Paused updates must not download Dashboard assets")
+
+    monkeypatch.setenv("ASTRBOT_UPDATES_DISABLED", "1")
+    monkeypatch.setattr(core_updater, "get_astrbot_data_path", lambda: str(data_path))
+    monkeypatch.setattr(
+        core_updater,
+        "_get_bundled_dist_path",
+        lambda: tmp_path / "missing-bundled-dist",
+    )
+    monkeypatch.setattr(core_updater, "_download_package", fail_download)
+
+    assert await updater.ensure_dashboard() == data_dist
+    assert download_calls == []
+
+
+@pytest.mark.asyncio
 async def test_astrbot_updater_ensure_dashboard_uses_compatible_managed_assets(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

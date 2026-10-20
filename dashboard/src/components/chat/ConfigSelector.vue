@@ -74,11 +74,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { configProfileApi, configRouteApi } from '@/api/v1';
 import { useToast } from '@/utils/toast';
 import { useModuleI18n } from '@/i18n/composables';
 import {
+    BOT_PROFILE_CHANGED_EVENT,
     getStoredDashboardUsername,
     getStoredSelectedChatConfigId,
     setStoredSelectedChatConfigId
@@ -279,10 +280,14 @@ async function confirmSelection() {
     }
     const previousId = selectedConfigId.value;
     await setSelection(tempSelectedConfig.value);
-    setStoredSelectedChatConfigId(tempSelectedConfig.value);
+    if (!hasActiveSession.value) {
+        setStoredSelectedChatConfigId(tempSelectedConfig.value);
+    }
     const applied = await applySelectionToBackend(tempSelectedConfig.value);
     if (!applied) {
-        setStoredSelectedChatConfigId(previousId);
+        if (!hasActiveSession.value) {
+            setStoredSelectedChatConfigId(previousId);
+        }
         await setSelection(previousId);
     }
     dialog.value = false;
@@ -301,7 +306,14 @@ async function syncSelectionForSession() {
     await fetchRoutingEntries();
     const resolved = resolveConfigId(targetUmo.value);
     await setSelection(resolved);
-    setStoredSelectedChatConfigId(resolved);
+}
+
+async function handleActiveProfileChanged(event: Event) {
+    if (hasActiveSession.value) return;
+    const configId = (event as CustomEvent<{ configId?: string }>).detail?.configId;
+    if (configId && configId !== selectedConfigId.value) {
+        await setSelection(configId);
+    }
 }
 
 watch(
@@ -312,11 +324,16 @@ watch(
 );
 
 onMounted(async () => {
+    window.addEventListener(BOT_PROFILE_CHANGED_EVENT, handleActiveProfileChanged);
     await fetchConfigList();
     const stored = props.initialConfigId || getStoredSelectedChatConfigId();
     selectedConfigId.value = stored;
     await setSelection(stored);
     await syncSelectionForSession();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener(BOT_PROFILE_CHANGED_EVENT, handleActiveProfileChanged);
 });
 </script>
 

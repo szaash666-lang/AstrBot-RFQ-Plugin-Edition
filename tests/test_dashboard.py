@@ -2977,6 +2977,68 @@ async def test_t2i_update_active_template_reloads_all_schedulers(
 
 
 @pytest.mark.asyncio
+async def test_update_endpoints_are_paused_without_calling_updater(
+    app: FastAPIAppAdapter,
+    authenticated_header: dict,
+    core_lifecycle_td: AstrBotCoreLifecycle,
+    monkeypatch,
+):
+    test_client = app.test_client()
+    updater_calls: list[str] = []
+
+    async def fail_updater(*_args, **_kwargs):
+        updater_calls.append("updater")
+        raise AssertionError("Paused endpoints must not call the updater")
+
+    monkeypatch.setenv("ASTRBOT_UPDATES_DISABLED", "1")
+    monkeypatch.setattr(core_lifecycle_td.astrbot_updater, "check_update", fail_updater)
+    monkeypatch.setattr(core_lifecycle_td.astrbot_updater, "get_releases", fail_updater)
+    monkeypatch.setattr(core_lifecycle_td.astrbot_updater, "update", fail_updater)
+    monkeypatch.setattr(
+        core_lifecycle_td.astrbot_updater,
+        "ensure_dashboard",
+        fail_updater,
+    )
+
+    check_response = await test_client.get(
+        "/api/update/check",
+        headers=authenticated_header,
+    )
+    check_data = await check_response.get_json()
+    assert check_response.status_code == 200
+    assert check_data["status"] == "success"
+    assert check_data["data"]["has_new_version"] is False
+    assert check_data["data"]["dashboard_has_new_version"] is False
+    assert check_data["data"]["updates_disabled"] is True
+
+    releases_response = await test_client.get(
+        "/api/update/releases",
+        headers=authenticated_header,
+    )
+    releases_data = await releases_response.get_json()
+    assert releases_data["status"] == "ok"
+    assert releases_data["data"] == []
+
+    core_response = await test_client.post(
+        "/api/update/do",
+        headers=authenticated_header,
+        json={"version": "latest", "reboot": False},
+    )
+    core_data = await core_response.get_json()
+    assert core_data["status"] == "error"
+    assert core_data["data"] == {"code": "updates_disabled"}
+
+    dashboard_response = await test_client.post(
+        "/api/update/dashboard",
+        headers=authenticated_header,
+    )
+    dashboard_data = await dashboard_response.get_json()
+    assert dashboard_data["status"] == "error"
+    assert dashboard_data["data"] == {"code": "updates_disabled"}
+    assert updater_calls == []
+
+
+@pytest.mark.asyncio
 async def test_check_update(
     app: FastAPIAppAdapter,
     authenticated_header: dict,

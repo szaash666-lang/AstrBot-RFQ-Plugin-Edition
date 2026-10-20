@@ -1,15 +1,11 @@
-<script setup>
-import Chat from '@/components/chat/Chat.vue'
+<script setup lang="ts">
+import PlatformConversationPage from "@/views/chat/PlatformConversationPage.vue";
+
+withDefaults(defineProps<{ active?: boolean }>(), {
+  active: true,
+});
 </script>
 
 <template>
-    <div class="chat-container">
-        <Chat />
-    </div>
+  <PlatformConversationPage :active="active" />
 </template>
-
-<style scoped>
-.chat-container {
-    height: calc(100vh - 60px)
-}
-</style>
