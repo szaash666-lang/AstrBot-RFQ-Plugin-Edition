@@ -45,17 +45,10 @@ Always reference these instructions first and fallback to search or bash command
 
 ## CI/CD Integration
 - GitHub Actions workflows in `.github/workflows/`
-- Docker builds supported via `Dockerfile`
 - Pre-commit hooks enforce ruff formatting and linting
 
-## Docker Support
-- Primary deployment method: `docker run soulter/astrbot:latest`
-- Compose file available: `compose.yml`
-- Exposes ports: 6185 (WebUI), 6195 (WeChat), 6199 (QQ), etc.
-- Volume mount required: `./data:/AstrBot/data`
-
 ## Multi-language Support
-- Documentation in Chinese (README.md), English (README_en.md), Japanese (README_ja.md)
+- Project documentation is in `README.md`
 - UI supports internationalization
 - Default language is Chinese
 
