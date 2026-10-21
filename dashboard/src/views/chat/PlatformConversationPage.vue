@@ -456,7 +456,7 @@ function startPolling() {
   if (pollTimer !== null || !props.active) return;
   pollTimer = window.setInterval(() => {
     if (!document.hidden && props.active) void refreshAll(true);
-  }, 15_000);
+  }, 2_000);
 }
 
 function stopPolling() {

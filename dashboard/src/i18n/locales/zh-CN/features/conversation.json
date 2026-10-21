@@ -90,7 +90,7 @@
     "bot": "机器人",
     "attachment": "平台附件",
     "image": "对话图片",
-    "readOnly": "只读视图 · 每 15 秒自动同步",
+    "readOnly": "只读视图 · 每 2 秒自动同步",
     "closeList": "关闭对话列表",
     "backToList": "返回对话列表"
   },

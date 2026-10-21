@@ -87,7 +87,7 @@ Bot Chat is an inbox for external messaging platforms. It shows only conversatio
 
 - The left pane lists platform conversations by recent activity and supports message/contact search plus platform and private/group filters.
 - The right pane shows only user-visible platform messages and bot replies. System reminders, model reasoning, and tool messages are hidden.
-- The page synchronizes every 15 seconds and also supports manual refresh. It is read-only and does not send messages from Dashboard to a platform.
+- The page synchronizes every 2 seconds and also supports manual refresh. It is read-only and does not send messages from Dashboard to a platform.
 - Mobile opens on the conversation list; after selecting a conversation, use Back or the top menu to reopen the list.
 - Detail links use `/chat/:conversationId?umo=...` so a platform conversation can be opened directly.
 

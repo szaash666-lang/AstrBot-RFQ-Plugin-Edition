@@ -90,7 +90,7 @@
     "bot": "Bot",
     "attachment": "Platform attachment",
     "image": "Conversation image",
-    "readOnly": "Read-only · syncs every 15 seconds",
+    "readOnly": "Read-only · syncs every 2 seconds",
     "closeList": "Close conversation list",
     "backToList": "Back to conversation list"
   },
